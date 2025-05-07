@@ -16,10 +16,13 @@ function eventContextPayload(eventName, eventData) {
 
     return {};
 }
-
-ContextDataEvents.set('message', event => ({
-  chat_id: event.chat.id,
-  message_id: event.message_id
+  
+  // Incomming messages
+  ContextDataEvents.set('message', event => ({
+    chat_id: event.chat.id,
+    from_chat_id: event.chat.id,
+    message_id: event.message_id,
+    message_thread_id: event?.message_thread_id
 }));
 
 // Обработчик для бизнесс аккаунта
@@ -38,14 +41,43 @@ ContextDataEvents.set('business_connection', event => ({
   // business_connection_id: event.id
 }));
 
+
+// request of pushed inline button
 ContextDataEvents.set('callback_query', event => ({
   chat_id: event.message.chat.id,
   callback_query_id: event.id,
   message_id: event.message.message_id
 }));
 
+
 ContextDataEvents.set('inline_query', event => ({
   inline_query_id: event.id
+}));
+
+// Post to channel
+ContextDataEvents.set('channel_post', event => ({
+  chat_id: event.chat.id,
+  message_id: event.message_id
+}));
+
+// Voited in poll
+ContextDataEvents.set('poll_answer', event => ({
+  chat_id: 'user' in event ? event.user.id : event.voter_chat.id
+}));
+
+// Запрос на  вступление в чат
+ContextDataEvents.set('chat_join_request', event => ({
+  chat_id: event.from.id
+}));
+
+// Чат получил boost
+ContextDataEvents.set('chat_boost', event => ({
+  chat_id: event.boost.source.user.id
+}));
+
+// Пользователь удалил boost
+ContextDataEvents.set('removed_chat_boost', event => ({
+  chat_id: event.source.user.id
 }));
 
 
