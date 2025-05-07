@@ -22,6 +22,22 @@ ContextDataEvents.set('message', event => ({
   message_id: event.message_id
 }));
 
+// Обработчик для бизнесс аккаунта
+const businessHandler = event => ({
+  business_connection_id: event.business_connection_id,
+  chat_id: event.chat.id,
+  message_id: event.message_id
+});
+
+ContextDataEvents.set('business_message', businessHandler);
+ContextDataEvents.set('edited_business_message', businessHandler);
+ContextDataEvents.set('deleted_business_messages', businessHandler);
+
+ContextDataEvents.set('business_connection', event => ({
+  chat_id: event.user_chat_id,
+  // business_connection_id: event.id
+}));
+
 ContextDataEvents.set('callback_query', event => ({
   chat_id: event.message.chat.id,
   callback_query_id: event.id,
