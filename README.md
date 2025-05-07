@@ -23,7 +23,7 @@ const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 // Create echo-bot
 bot.on('message', (event) => {
   event.sendMessage({
-    text: event.message.text
+    text: event.text
   });
 });
 
@@ -97,7 +97,7 @@ const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
 // Send keyboard on command "/somedata"
 bot.on('message', (event) => {
-  if (event.message.text === '/somedata') {
+  if (event.text === '/somedata') {
     event.sendMessage({
       text: 'Press the button and bot send some data',
       reply_markup: {
@@ -112,7 +112,7 @@ bot.on('message', (event) => {
 
 // Handle callback-query event
 bot.on('callback_query', (event) => {
-  if (event.callback_query.data === 'SOME DATA') {
+  if (event.data === 'SOME DATA') {
     event.sendMessage({
       text: 'You press the button, and bot send <b>some data</b>',
       parse_mode: 'HTML'
@@ -130,7 +130,7 @@ const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
 // Passed just function
 bot.on((event, eventName) => {
-  const name = event[eventName].from.first_name;
+  const name = event.from.first_name;
   event.sendMessage({
     text:  `Hi, ${name}! The event <i>${eventName}</i> just happened`,
     parse_mode: 'HTML'
@@ -150,7 +150,7 @@ import bot from './bot.js';
 function createOnTextMethod(bot) {
   return (matchText, handler) => {
     bot.on('message', (event) => {
-      if (event.message.text === matchText)
+      if (event.text === matchText)
         return handler(event);
       });
   };
@@ -188,7 +188,7 @@ bot.event.log = createEventLog;
 
 // And use in event handler
 bot.on('message', (event) => {
-  return event.log(event.message)
+  return event.log(event.update)
 });
 
 ```
