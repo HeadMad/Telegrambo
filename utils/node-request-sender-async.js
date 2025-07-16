@@ -1,4 +1,4 @@
-import asyncPostRequest from "./post-request-async.js";
+import https from "https";
 import RequestPayloadPrepare from "./request-payload-prepare.js";
 
 export default createRequestSender;
@@ -23,7 +23,38 @@ function createRequestSender(token) {
     const url = `https://api.telegram.org/bot${token}/${method}`;
     const preparedPayload = RequestPayloadPrepare(payload);
 
-    return asyncPostRequest(url, preparedPayload);
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      // Создаем запрос
+      const req = https.request(url, requestOptions, (res) => {
+        let data = '';
+
+        // Собираем данные
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        res.on('end', () => {
+          resolve(JSON.parse(data));
+        });
+      });
+
+      // Обрабатываем ошибки
+      req.on('error', err => {
+        reject(err)
+      });
+
+      // Отправляем данные
+      req.write(JSON.stringify(preparedPayload));
+      req.end();
+    });
   }
 }
 

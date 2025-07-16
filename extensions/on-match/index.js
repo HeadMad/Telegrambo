@@ -8,14 +8,14 @@ export default onMatch;
  * @param {string} matchSeparator - The separator used to split the match string into an array.
  * @return {function} A callback function that handles the match.
  */
-function onMatch(bot, matchSeparator = '::') {
-  return function (matchString, matchHandler) {
+function onMatch( matchSeparator = '::') {
+  return (bot) => (matchString, matchHandler) => {
 
     const matchChain = matchString.split(matchSeparator);
     const event = matchChain[0] ? matchChain[0] : null;
 
-    bot.on(event, (eventContext, eventName) => {
-      return checkMatchChein(matchChain, matchHandler)(eventContext, eventName, eventContext.update);
+    bot.on(event, (event, eventName) => {
+      return checkMatchChein(matchChain, matchHandler)(event, eventName, event.update);
     });
   };
 }
@@ -28,7 +28,7 @@ function onMatch(bot, matchSeparator = '::') {
  * @return {function} The created match handler function.
  */
 function checkMatchChein(matchChain, matchHandler) {
-  const regExpr = /^\/(.+)\/([imus]{0,4})?$/;
+  const IsregExpr = /^\/(.+)\/([imus]{0,4})?$/;
 
   return (eventContext, eventName, match) => {
 
@@ -54,8 +54,8 @@ function checkMatchChein(matchChain, matchHandler) {
       } else if (prop === '') {
         continue;
 
-      } else if (regExpr.test(prop)) {
-        const [_, pattern, flags] = prop.match(regExpr);
+      } else if (IsregExpr.test(prop)) {
+        const [_, pattern, flags] = prop.match(IsregExpr);
         const RE = new RegExp(pattern, flags);
         match = match.match(RE);
         if (!match)

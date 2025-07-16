@@ -1,20 +1,17 @@
 # Telegrambo
 
-Telegrambo is a simple library for interacting with the [Telegram Bot API](https://core.telegram.org/bots/api)
+<br>Telegrambo is a simple library for interacting with the [Telegram Bot API](https://core.telegram.org/bots/api)
 
 This library is based on the telegram API, so all methods of the bot instance will be [available methods](https://core.telegram.org/bots/api#available-methods) from the telegram list.
 
 The context in the event handler also uses the available methods, while having ready-made fields in the arguments of these methods, such as *chat_id* or *message_id* and others. If necessary, you can overwrite these fields.
 
-## Installation
-
-You can install Telegrambo using npm:
-
-`npm install telegrambo`
+<br>
 
 ## Usage
 
-At first, create bot:
+
+<br>At first, create bot:
 ```js
 // bot.js
 import telegrambo from 'telegrambo';
@@ -29,6 +26,7 @@ bot.on('message', (event) => {
 
 export default bot;
 ```
+
 
 <br>Then import it as a module. For example, using bot with webhook:
 
@@ -56,6 +54,7 @@ export default async function handler(request, response) {
   return response.send('Ok');
 }
 ```
+
 <br>Or with long polling:
 
 ```js
@@ -68,7 +67,9 @@ import bot from './bot.js';
   while (true) {
     const {ok, result} = await bot.getUpdates({
       offset,
-      timeout
+      timeout,
+      limit: 100,
+      allowed_updates: []
     });
 
     if (!ok)
@@ -168,51 +169,95 @@ bot.onText('Hello', (event) => {
 ```
 <br>
 
-Also you can add new methods for event context. Like this:
+
+
+## API
+
+### bot
+ Instance of _BotContext_. Has fixed and dynamic methods.
+
+Fixed methods:
+- `bot.setUpdate(update)` A method that triggers the processing of incoming events received from Telegram servers
+  - `update` - Object with data from telegram. Getting with webhook or by method _bot.getUpdates()_
+- `bot.on(eventName, eventHandler)` Method that sets the handler for an incoming named event
+  - `eventName` Name of event
+  - `eventHandler` Function handler of an incoming event that passes two parameters, _event_ and _eventName_, as arguments
+- `bot.on(eventHandler)` A method that processes all incoming events, regardless of the event name
+
+>Dynamic methods execute requests to Telegram servers with the name of the corresponding method and the data passed in the argument of this method as an object. You can take the fields for passing data and the names of methods from the [Bot API Telegram documentation](https://core.telegram.org/bots/api#available-methods)
+
+Example of dinamic method:
 
 ```js
 import bot from './bot.js';
 
-// Write method for send log from object to user:
-function createEventLog(event, eventName) {
-  return (object) => {
-    event.sendMessage({
-      text: `<pre>${JSON.stringify(object, null, ' ')}</pre>`,
-      parse_mode: 'HTML'
-    });
-  };
-};
+// Forwarding message from chat with id = 123456789
+// to chat with id = 987654321
+bot.forwardMessage({
+  chat_id: 123456789,
+  from_chat_id: 987654321,
+  message_id: 12
+})
+```
+<br>
 
-// Initialize new method
-bot.event.log = createEventLog;
+### event 
+  Instance of _EventContext_. Has dinamic params - info from update object. And has fixed helper params:
 
-// And use in event handler
+- `event.update` Return object with data of update from incoming event.
+- `event.payload` Return object with prepare data for sending to bot in this event context
+
+> EventContext dynamic methods work in the same way as BotContext dynamic methods. The difference is that these methods receive prepared data from the update object of the event.
+
+Example of event dinamic method:
+```js
+import createBot from 'telegrambo';
+
+const bot = createBot(process.env.YOUR_BOT_TOKEN);
+
+// Create simple echo bot
 bot.on('message', (event) => {
-  return event.log(event.update)
-});
 
+  // A dynamic method that takes one parameter
+  // text of the message to be sent, 
+  // it taken from the update of incoming message.
+  // chat_id is automatically taken from the incoming event update. 
+  // But if necessary, it can be overridden
+  event.sendMessage({
+    text: event.text
+  });
+})
 ```
 
-## API
+<br>
 
+## Also Client Version
+You can start telegram bot on client side, in browser
 
-`nodeBotAsync(token)`
-Creates a new BotContext object that handles events and provides a proxy to interact with the bot.
+```js
+import telegrambo from 'telegrambo/browser';
+import polling from 'telegrambo-polling';
 
-`token` (string): Telegram token of bot
+const bot = telegrambo(YOU_BOT_TOKEN);
+bot.polling = polling;
 
-`bot.on(eventName, eventHandler)`
-Adds an event handler for the specified event name.
+// Create echo-bot
+bot.on('message', (event) => {
+  event.sendMessage({
+    text: event.text
+  });
+});
 
-`eventName` (string|function): The name of the event or a function to handle all events.
+bot.polling({
+  timeout: 60,
+  limit: 100,
+  offset: 0,
+  allowedUpdates: []
+});
+```
 
-`eventHandler` (function): The function to handle the event.
-
-`bot.setUpdate(update)`
-Processes the given event payload and returns an array of event handlers.
-
-`update` (Object): The payload of the event to be processed.
-
+<br>
+<br>
 
 ## License
 Telegrambo is MIT licensed.

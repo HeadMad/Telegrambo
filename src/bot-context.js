@@ -14,22 +14,7 @@ export default BotContext;
  */
 function BotContext(requestSender) {
   const EVENTS = createHandlerStorage();
-  const EVENT_CONTEXT_METHODS = new Map();
   const self = {};
-
-
-  self.event = new Proxy(EVENT_CONTEXT_METHODS, {
-    set(target, prop, value) {
-      if (prop in target)
-        throw new EventContextError(`Can't rewrite method "${prop}"`);
-
-      if (typeof value !== 'function')
-        throw new EventContextError(`New method "${prop}" must be a function`);
-
-        target.set(prop, value);
-        return true;
-    }
-  });
 
   /**
    * Attaches an event handler for a specific event or event match.
@@ -72,7 +57,7 @@ function BotContext(requestSender) {
   function runEventHandlers(trigger, eventName, eventPayload) {
     const result = [];
     if (EVENTS.has(trigger)) {
-      const eventContext = EventContext(requestSender, EVENT_CONTEXT_METHODS, eventName, eventPayload);
+      const eventContext = EventContext(requestSender, eventName, eventPayload);
       for (let handler of EVENTS.get(trigger))
         result.push(handler(eventContext, eventName));
     }

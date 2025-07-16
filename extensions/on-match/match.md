@@ -9,7 +9,7 @@ import { onMatch } from 'telegrambo/extensions';
 const bot = createNodeBot(process.env.YOUR_BOT_TOKEN);
 
 // Initialize new method
-bot.onMatch = onMatch(bot, '::');
+bot.onMatch = onMatch('::');
 ```
 
 Creates a callback function to handle a specific match.

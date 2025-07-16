@@ -8,35 +8,24 @@ export default EventContext;
  * Creates a new EventContext object.
  *
  * @param {function} requestSender - The function used to send requests.
- * @param {Map} eventMethods - An Map object containing event methods.
  * @param {string} eventName - The name of the event.
  * @param {object} eventPayload - An object containing event data.
  * @return {object} The new EventContext object.
  */
-function EventContext(requestSender, eventMethods, eventName, eventPayload) {
+function EventContext(requestSender, eventName, eventPayload) {
   const eventData = eventPayload[eventName];
   const contextPayload = EventContextPayload(eventName, eventData);
 
-  const eventContextResult = new Proxy(eventPayload, {
+  const eventContextResult = new Proxy(eventData, {
     get(target, prop) {
       if (prop in target)
         return target[prop];
 
       if (prop === 'update')
-        return target;
+        return eventPayload;
 
       if (prop === 'payload')
         return contextPayload;
-
-      if (prop === 'result')
-        return new Proxy({}, {
-          get: (_, method) =>
-            (requestPayload = {}) =>
-              ({ method, ...contextPayload, ...requestPayload })
-        });
-
-      if (eventMethods.has(prop))
-        return eventMethods.get(prop)(eventContextResult, eventName);
 
       return (requestPayload = {}) => requestSender(prop, { ...contextPayload, ...requestPayload });
     },
