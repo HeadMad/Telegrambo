@@ -337,5 +337,3 @@ bot.polling({
 
 ## License
 Telegrambo is MIT licensed.
-
-Please make sure to update the installation, usage, and API sections with the correct information for your library. Also, don't forget to include a license file and a contributing guidelines file if applicable.
