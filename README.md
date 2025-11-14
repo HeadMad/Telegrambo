@@ -169,7 +169,83 @@ bot.onText('Hello', (event) => {
 ```
 <br>
 
+## Sending files
 
+You can send files in three ways:
+1.  Using the `file_id` of a file already on Telegram's servers.
+2.  Using a file URL.
+3.  Uploading a file from your computer.
+
+<br>
+
+**Sending a photo by URL**
+
+```js
+import bot from './bot.js';
+
+bot.onText('/photo', (event) => {
+  event.sendPhoto({
+    photo: 'https://picsum.photos/200/300',
+    caption: 'Random image'
+  });
+});
+```
+<br>
+
+**Sending a document from a local file**
+
+To send a local file, you need to pass a `Buffer` or a stream. It is recommended to use streams for large files.
+
+```js
+import bot from './bot.js';
+import fs from 'fs';
+import path from 'path';
+
+bot.onText('/doc', (event) => {
+  const filePath = path.resolve('./document.pdf');
+  
+  // Check if the file exists
+  if (fs.existsSync(filePath)) {
+    event.sendDocument({
+      document: fs.createReadStream(filePath),
+      caption: 'This is my document'
+    });
+  } else {
+    event.sendMessage({ text: 'File not found!' });
+  }
+});
+```
+<br>
+
+**Sending a media group**
+
+You can send multiple photos and videos in one message.
+
+```js
+import bot from './bot.js';
+import fs from 'fs';
+import path from 'path';
+
+bot.onText('/media', (event) => {
+  const photoPath1 = path.resolve('./photo1.jpg');
+  const photoPath2 = path.resolve('./photo2.jpg');
+
+  event.sendMediaGroup({
+    media: [
+      {
+        type: 'photo',
+        media: fs.createReadStream(photoPath1)
+      },
+      {
+        type: 'photo',
+        media: fs.createReadStream(photoPath2),
+        caption: 'Two images'
+      }
+    ]
+  });
+});
+```
+<br>
 
 ## API
 
