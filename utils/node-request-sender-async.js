@@ -142,13 +142,7 @@ function sendRequest(url, { body, headers }, timeout) {
       res.on('end', () => {
         try {
           const data = JSON.parse(Buffer.concat(chunks).toString());
-          if (data.ok) {
-            resolve(data.result);
-          } else {
-            const err = new Error(data.description || 'API Error');
-            err.code = data.error_code;
-            reject(err);
-          }
+          resolve(data);
         } catch (e) {
           reject(new Error(`Parse error: ${e.message}`));
         }

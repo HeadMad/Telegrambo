@@ -22,7 +22,8 @@ function eventContextPayload(eventName, eventData) {
     chat_id: event.chat.id,
     from_chat_id: event.chat.id,
     message_id: event.message_id,
-    message_thread_id: event?.message_thread_id
+    message_thread_id: event?.message_thread_id,
+    direct_messages_topic_id: event?.direct_messages_topic.topic_id
 }));
 
 // Обработчик для бизнесс аккаунта
