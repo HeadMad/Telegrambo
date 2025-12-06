@@ -1,6 +1,6 @@
 import https from "https";
 import { URL } from "url";
-import RequestPayloadPrepare from "./request-payload-prepare.js";
+import RequestPayloadPrepare from "./requestPayloadPrepare.js";
 
 export default createRequestSender;
 

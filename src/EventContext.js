@@ -1,5 +1,4 @@
-import EventContextPayload from './event-context-payload.js';
-import { EventContextError } from './errors.js';
+import EventContextPayload from './eventContextPayload.js';
 
 export default EventContext;
 

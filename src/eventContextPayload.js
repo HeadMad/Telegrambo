@@ -1,24 +1,7 @@
 const ContextDataEvents = new Map();
 
-export default eventContextPayload;
-
-
-/**
- * Generates the payload for a given event context.
- *
- * @param {string} eventName - The name of the event.
- * @param {any} eventData - The data associated with the event.
- * @return {object} The payload for the event context.
- */
-function eventContextPayload(eventName, eventData) {
-  if (ContextDataEvents.has(eventName))
-    return ContextDataEvents.get(eventName)(eventData);
-
-    return {};
-}
-  
-  // Incomming messages
-  ContextDataEvents.set('message', event => ({
+// Incomming messages
+ContextDataEvents.set('message', event => ({
     chat_id: event.chat.id,
     from_chat_id: event.chat.id,
     message_id: event.message_id,
@@ -82,3 +65,20 @@ ContextDataEvents.set('removed_chat_boost', event => ({
 }));
 
 
+export default eventContextPayload;
+
+
+/**
+ * Generates the payload for a given event context.
+ *
+ * @param {string} eventName - The name of the event.
+ * @param {any} eventData - The data associated with the event.
+ * @return {object} The payload for the event context.
+ */
+function eventContextPayload(eventName, eventData) {
+  if (ContextDataEvents.has(eventName))
+    return ContextDataEvents.get(eventName)(eventData);
+
+    return {};
+}
+  

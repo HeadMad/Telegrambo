@@ -8,10 +8,76 @@ The context in the event handler also uses the available methods, while having r
 
 <br>
 
-## Usage
+## Installation and Usage
+
+### Installation
+
+Install the package using your favorite package manager:
+
+```bash
+# npm
+npm install telegrambo
+
+# pnpm
+pnpm add telegrambo
+
+# yarn
+yarn add telegrambo
+```
+
+### Node.js Usage
+
+You can use either ES Modules or CommonJS.
+
+**ES Modules (`import`)**
+```javascript
+import telegrambo from 'telegrambo';
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+**CommonJS (`require`)**
+```javascript
+const telegrambo = require('telegrambo');
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+### Browser Usage
+
+**1. Using a Bundler (like Vite, Webpack)**
+
+For modern bundlers, you can import the browser-optimized ES module for better tree-shaking:
+
+```javascript
+import telegrambo from 'telegrambo/browser';
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+**2. Using a `<script>` Tag**
+
+You can include the library directly in your HTML page using the UMD bundle from a CDN like jsDelivr or unpkg. This will expose a global `telegrambo` variable.
+
+```html
 
 
-<br>At first, create bot:
+
+<script src="https://unpkg.com/telegrambo@1.1.4/dist/telegrambo.browser.umd.js"></script>
+<!-- Or https://cdn.jsdelivr.net/npm/telegrambo@latest/dist/telegrambo.browser.umd.js -->
+
+<script>
+  const bot = telegrambo('YOUR_BOT_TOKEN');
+  console.log('Bot initialized!', bot);
+</script>
+```
+
+## Examples
+
+### Basic Echo Bot
+
+This is the simplest way to get started.
+
 ```js
 // bot.js
 import telegrambo from 'telegrambo';
@@ -27,8 +93,7 @@ bot.on('message', (event) => {
 export default bot;
 ```
 
-
-<br>Then import it as a module. For example, using bot with webhook:
+### Using with a Webhook
 
 ```js
 import bot from './bot.js';
@@ -38,7 +103,6 @@ export default async function handler(request, response) {
   if (request.method === 'POST') {
 
     // request.body must be a object.
-    // setUpdate will sequentially execute all matching handlers.
     const handlerResults = await bot.setUpdate(request.body);
     console.log('Handler results:', handlerResults);
 
@@ -56,7 +120,7 @@ export default async function handler(request, response) {
 }
 ```
 
-<br>Or with long polling:
+### Using with Long Polling
 
 ```js
 import bot from './bot.js';
@@ -82,7 +146,6 @@ import bot from './bot.js';
       continue;
     
     for (let update of result) {
-      // It's good practice to await setUpdate, especially with async handlers
       await bot.setUpdate(update);
     }
 
@@ -91,13 +154,15 @@ import bot from './bot.js';
 })();
 ```
 
-<br>List of events you can get from type [_Update_](https://core.telegram.org/bots/api#update) in official documentation. It can be any field except `update_id`. For example, listen event `callback_query`:
+### Handling Different Event Types
+
+List of events you can get from type [_Update_](https://core.telegram.org/bots/api#update) in official documentation.
 
 ```js
-// bot.js
 import telegrambo from 'telegrambo';
 const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
+// Handle a command to show a button
 bot.on('message', (event) => {
   if (event.text === '/somedata') {
     event.sendMessage({
@@ -112,6 +177,7 @@ bot.on('message', (event) => {
   }
 });
 
+// Handle the button's callback query
 bot.on('callback_query', (event) => {
   if (event.data === 'SOME DATA') {
     event.sendMessage({
@@ -122,14 +188,14 @@ bot.on('callback_query', (event) => {
 });
 ```
 
-<br>If passed just one argument in 'bot.on' method, and it's a function, this handler be applied to any event:
+### Catch-All Handler
+
+If you pass only a function to `bot.on`, it will be applied to any event.
 
 ```js
-// bot.js
 import telegrambo from 'telegrambo';
 const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
-// Passed just function
 bot.on((event, eventName) => {
   const name = event.from.first_name;
   event.sendMessage({

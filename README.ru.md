@@ -8,10 +8,72 @@
 
 <br>
 
-## Использование
+## Установка и Использование
 
+### Установка
 
-<br>Сначала создайте бота:
+Установите пакет с помощью вашего любимого менеджера пакетов:
+
+```bash
+# npm
+npm install telegrambo
+
+# pnpm
+pnpm add telegrambo
+
+# yarn
+yarn add telegrambo
+```
+
+### Использование в Node.js
+
+Вы можете использовать как ES-модули, так и CommonJS.
+
+**ES-модули (`import`)**
+```javascript
+import telegrambo from 'telegrambo';
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+**CommonJS (`require`)**
+```javascript
+const telegrambo = require('telegrambo');
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+### Использование в браузере
+
+**1. С использованием сборщика (например, Vite, Webpack)**
+
+Для современных сборщиков вы можете импортировать оптимизированный для браузера ES-модуль для лучшего tree-shaking:
+
+```javascript
+import telegrambo from 'telegrambo/browser';
+
+const bot = telegrambo('YOUR_BOT_TOKEN');
+```
+
+**2. С использованием тега `<script>`**
+
+Вы можете подключить библиотеку напрямую в ваш HTML-файл, используя UMD-бандл из CDN, такого как jsDelivr или unpkg. Это создаст глобальную переменную `telegrambo`.
+
+```html
+<script src="https://unpkg.com/telegrambo@1.1.4/dist/telegrambo.browser.umd.js"></script>
+<!-- Или https://cdn.jsdelivr.net/npm/telegrambo@latest/dist/telegrambo.browser.umd.js -->
+<script>
+  const bot = telegrambo('YOUR_BOT_TOKEN');
+  console.log('Бот инициализирован!', bot);
+</script>
+```
+
+## Примеры
+
+### Простой Эхо-бот
+
+Это самый простой способ начать работу.
+
 ```js
 // bot.js
 import telegrambo from 'telegrambo';
@@ -27,8 +89,7 @@ bot.on('message', (event) => {
 export default bot;
 ```
 
-
-<br>Затем импортируйте его как модуль. Например, используя бота с веб-хуком:
+### Использование с веб-хуком
 
 ```js
 import bot from './bot.js';
@@ -38,7 +99,6 @@ export default async function handler(request, response) {
   if (request.method === 'POST') {
 
     // request.body должен быть объектом.
-    // setUpdate последовательно выполнит все подходящие обработчики.
     const handlerResults = await bot.setUpdate(request.body);
     console.log('Результаты обработчиков:', handlerResults);
 
@@ -56,7 +116,7 @@ export default async function handler(request, response) {
 }
 ```
 
-<br>Или с использованием long polling:
+### Использование с Long Polling
 
 ```js
 import bot from './bot.js';
@@ -82,7 +142,6 @@ import bot from './bot.js';
       continue;
     
     for (let update of result) {
-      // Хорошей практикой является ожидание setUpdate, особенно с асинхронными обработчиками
       await bot.setUpdate(update);
     }
 
@@ -91,13 +150,15 @@ import bot from './bot.js';
 })();
 ```
 
-<br>Список событий вы можете получить из типа [_Update_](https://core.telegram.org/bots/api#update) в официальной документации. Это может быть любое поле, кроме `update_id`. Например, прослушивание события `callback_query`:
+### Обработка разных типов событий
+
+Список событий вы можете получить из типа [_Update_](https://core.telegram.org/bots/api#update) в официальной документации.
 
 ```js
-// bot.js
 import telegrambo from 'telegrambo';
 const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
+// Обработка команды для показа кнопки
 bot.on('message', (event) => {
   if (event.text === '/somedata') {
     event.sendMessage({
@@ -112,6 +173,7 @@ bot.on('message', (event) => {
   }
 });
 
+// Обработка callback-запроса от кнопки
 bot.on('callback_query', (event) => {
   if (event.data === 'SOME DATA') {
     event.sendMessage({
@@ -122,14 +184,14 @@ bot.on('callback_query', (event) => {
 });
 ```
 
-<br>Если в метод `bot.on` передан только один аргумент, и это функция, этот обработчик будет применяться к любому событию:
+### Обработчик для всех событий
+
+Если в `bot.on` передана только функция, она будет применяться к любому событию.
 
 ```js
-// bot.js
 import telegrambo from 'telegrambo';
 const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
-// Передана только функция
 bot.on((event, eventName) => {
   const name = event.from.first_name;
   event.sendMessage({

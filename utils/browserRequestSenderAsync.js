@@ -1,6 +1,6 @@
-import RequestPayloadPrepare from "./request-payload-prepare.js";
+import RequestPayloadPrepare from "./requestPayloadPrepare.js";
 
-export default createRequestSender;
+export default BrowserRequestSenderAsync;
 
 function createRequestSender(token, { timeout = 30000, apiUrl = 'https://api.telegram.org' } = {}) {
   if (!token || typeof token !== 'string') 

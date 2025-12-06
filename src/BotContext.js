@@ -1,6 +1,6 @@
-import EventContext from './event-context.js';
-import createHandlerStorage from '../utils/create-handler-storage.js';
-import { BotContextError, EventContextError } from './errors.js';
+import EventContext from './EventContext.js';
+import createHandlerStorage from '../utils/createHandlerStorage.js';
+import { BotContextError } from './errors.js';
 
 export default BotContext;
 
