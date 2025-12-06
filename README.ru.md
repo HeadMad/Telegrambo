@@ -60,7 +60,7 @@ const bot = telegrambo('YOUR_BOT_TOKEN');
 Вы можете подключить библиотеку напрямую в ваш HTML-файл, используя UMD-бандл из CDN, такого как jsDelivr или unpkg. Это создаст глобальную переменную `telegrambo`.
 
 ```html
-<script src="https://unpkg.com/telegrambo@1.1.4/dist/telegrambo.browser.umd.js"></script>
+<script src="https://unpkg.com/telegrambo@1.2.0/dist/telegrambo.browser.umd.js"></script>
 <!-- Или https://cdn.jsdelivr.net/npm/telegrambo@latest/dist/telegrambo.browser.umd.js -->
 <script>
   const bot = telegrambo('YOUR_BOT_TOKEN');

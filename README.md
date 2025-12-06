@@ -63,7 +63,7 @@ You can include the library directly in your HTML page using the UMD bundle from
 
 
 
-<script src="https://unpkg.com/telegrambo@1.1.4/dist/telegrambo.browser.umd.js"></script>
+<script src="https://unpkg.com/telegrambo@1.2.0/dist/telegrambo.browser.umd.js"></script>
 <!-- Or https://cdn.jsdelivr.net/npm/telegrambo@latest/dist/telegrambo.browser.umd.js -->
 
 <script>
