@@ -42,7 +42,7 @@ function BotContext(requestSender) {
       ...runEventHandlers(eventName, eventName, eventPayload),
       ...runEventHandlers(null, eventName, eventPayload)
     ];
-    return handlers;
+    return Promise.all(handlers);
   };
   
 
