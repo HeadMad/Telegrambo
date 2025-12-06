@@ -19,7 +19,7 @@ const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
 // Create echo-bot
 bot.on('message', (event) => {
-  event.sendMessage({
+  return event.sendMessage({
     text: event.text
   });
 });
@@ -37,13 +37,14 @@ export default async function handler(request, response) {
   // Listening webhook on POST-request
   if (request.method === 'POST') {
 
-    // request.body must be a object
-    const {ok, result} = await bot.setUpdate(request.body);
-    console.log(result);
+    // request.body must be a object.
+    // setUpdate will sequentially execute all matching handlers.
+    const handlerResults = await bot.setUpdate(request.body);
+    console.log('Handler results:', handlerResults);
 
   // Set webhook if query-string of url have 'webhook':
   // https://my-syte.com?webhook
-  } else ('webhook' in request.query) {
+  } else if ('webhook' in request.query) {
     
     await bot.setWebhook({
       url: 'https://my-syte.com'
@@ -62,7 +63,7 @@ import bot from './bot.js';
 
 (async () => {
   let offset = 0;
-  let timeout = 60;
+  const timeout = 60;
 
   while (true) {
     const {ok, result} = await bot.getUpdates({
@@ -72,22 +73,23 @@ import bot from './bot.js';
       allowed_updates: []
     });
 
-    if (!ok)
+    if (!ok) {
+      console.error('Failed to get updates:', result);
       break;
+    }
     
     if (!result.length)
       continue;
     
-    offset = result.at(-1).update_id + 1;
+    for (let update of result) {
+      // It's good practice to await setUpdate, especially with async handlers
+      await bot.setUpdate(update);
+    }
 
-    for (let update of result)
-      bot.setUpdate(update);
+    offset = result.at(-1).update_id + 1;
   }
 })();
-
 ```
-
-
 
 <br>List of events you can get from type [_Update_](https://core.telegram.org/bots/api#update) in official documentation. It can be any field except `update_id`. For example, listen event `callback_query`:
 
@@ -96,7 +98,6 @@ import bot from './bot.js';
 import telegrambo from 'telegrambo';
 const bot = telegrambo(process.env.YOU_BOT_TOKEN);
 
-// Send keyboard on command "/somedata"
 bot.on('message', (event) => {
   if (event.text === '/somedata') {
     event.sendMessage({
@@ -111,7 +112,6 @@ bot.on('message', (event) => {
   }
 });
 
-// Handle callback-query event
 bot.on('callback_query', (event) => {
   if (event.data === 'SOME DATA') {
     event.sendMessage({
@@ -140,6 +140,32 @@ bot.on((event, eventName) => {
 ```
 <br>
 
+## Error Handling
+
+By default, any error inside a handler is caught and printed to the console via `console.error`. This ensures that one failed handler does not stop others from running.
+
+For more granular control, the `bot.on` method returns an object with a `.catch()` method, allowing you to attach a specific error handler.
+
+```js
+bot.on('message', (event) => {
+  // This handler will throw an error
+  if (event.text === '/error') {
+    throw new Error('This is a deliberate error!');
+  }
+  event.sendMessage({ text: 'No errors here!' });
+})
+.catch((error, event, eventName) => {
+  // This function will be called only if the handler above throws
+  console.log(`Caught an error in '${eventName}' handler: ${error.message}`);
+  
+  // You can then use event to respond, for example:
+  event.sendMessage({ text: 'Sorry, something went wrong processing your request.' });
+});
+```
+If the custom error handler (the function passed to `.catch()`) itself throws an error, that error will be caught internally, logged to `console.error`, and the processing of other handlers will continue. The original event handler's error will still be included in the `setUpdate` results.
+
+<br>
+
 ## Own methods
 
 <br>You can create own methods for bot. For example:
@@ -150,7 +176,7 @@ import bot from './bot.js';
 // Write function for creating new method
 function createOnTextMethod(bot) {
   return (matchText, handler) => {
-    bot.on('message', (event) => {
+    return bot.on('message', (event) => {
       if (event.text === matchText)
         return handler(event);
       });
@@ -160,12 +186,12 @@ function createOnTextMethod(bot) {
 // Initialize new method onText
 bot.onText = createOnTextMethod;
 
-// Run new method
+// Run new method and attach a specific error handler
 bot.onText('Hello', (event) => {
   return event.sendMessage({
     text: 'Hi there!'
   });
-});
+}).catch(console.error);
 ```
 <br>
 
@@ -251,14 +277,19 @@ bot.onText('/media', (event) => {
 
 ### bot
  Instance of _BotContext_. Has fixed and dynamic methods.
+ You can pass an optional `params` object to the `telegrambo` factory function to configure the bot's behavior:
+ - `params.parallel` (boolean, default: `false`): If `true`, event handlers for `bot.on()` will be executed in parallel when `bot.setUpdate()` is called. If `false` (default), handlers will be executed sequentially.
 
 Fixed methods:
-- `bot.setUpdate(update)` A method that triggers the processing of incoming events received from Telegram servers
-  - `update` - Object with data from telegram. Getting with webhook or by method _bot.getUpdates()_
-- `bot.on(eventName, eventHandler)` Method that sets the handler for an incoming named event
-  - `eventName` Name of event
-  - `eventHandler` Function handler of an incoming event that passes two parameters, _event_ and _eventName_, as arguments
-- `bot.on(eventHandler)` A method that processes all incoming events, regardless of the event name
+- `bot.setUpdate(update)` — A method that triggers the processing of incoming events. It executes all matching handlers (sequentially by default, or in parallel if `params.parallel` is true during bot creation).
+  - `update` - Object with data from telegram.
+  - **Returns**: A `Promise` that resolves to an `Array` containing the return values of all executed handlers. The order of results corresponds to the execution order.
+
+- `bot.on(eventName, eventHandler)` — Method that sets the handler for an incoming named event.
+  - `eventName` - Name of event.
+  - `eventHandler` - Function handler of an incoming event that passes `eventContext` and `eventName` as arguments.
+  - **Returns**: An object with a `.catch(reject)` method to set a specific error handler. The `reject` callback function receives `(error, eventContext, eventName)` as arguments.
+- `bot.on(eventHandler)` — A method that processes all incoming events, regardless of the event name. Returns an object with a `.catch()` method.
 
 >Dynamic methods execute requests to Telegram servers with the name of the corresponding method and the data passed in the argument of this method as an object. You can take the fields for passing data and the names of methods from the [Bot API Telegram documentation](https://core.telegram.org/bots/api#available-methods)
 

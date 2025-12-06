@@ -14,11 +14,11 @@ function createHandlerStorage() {
   return {
     has: type => storage.has(type),
     get: type => storage.get(type),
-    add(type, handler) {
+    add(type, value) {
       if (storage.has(type))
-        storage.get(type).push(handler);
+        storage.get(type).push(value);
       else
-        storage.set(type, [handler]);
+        storage.set(type, [value]);
     }
   };
 }

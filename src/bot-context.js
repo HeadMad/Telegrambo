@@ -12,7 +12,7 @@ export default BotContext;
  * @param {string} params.match_separator - The separator used for event matching. Default is '::'.
  * @return {object} The BotContext object.
  */
-function BotContext(requestSender) {
+function BotContext(requestSender, params = {}) {
   const EVENTS = createHandlerStorage();
   const self = {};
 
@@ -27,44 +27,62 @@ function BotContext(requestSender) {
       eventHandler = eventName;
       eventName = null;
     }
-    EVENTS.add(eventName, eventHandler);
+
+    const eventObject = { handler: eventHandler };
+    EVENTS.add(eventName, eventObject);
+
+    return {
+      catch(reject) {
+        eventObject.reject = reject;
+      }
+    }
   };
 
   /**
-   * Processes the event payload and returns the list of handlers to be executed.
+   * Processes the event payload by sequentially executing all relevant handlers.
+   * If a handler throws an error, it is caught and logged, and execution continues with the next handler.
    *
    * @param {object} eventPayload - The payload of the event.
-   * @return {array} The list of handlers to be executed.
+   * @returns {Promise<Array>} A promise that resolves with an array of results from successful handlers, flattened.
    */
-  self.setUpdate = (eventPayload) => {
+  self.setUpdate = async (eventPayload) => {
     const eventName = Object.keys(eventPayload).find(key => key !== 'update_id');
-    const handlers = [
-      ...runEventHandlers(eventName, eventName, eventPayload),
-      ...runEventHandlers(null, eventName, eventPayload)
-    ];
-    return Promise.all(handlers);
-  };
+    const eventContext = EventContext(requestSender, eventName, eventPayload);
+
+    const eventObjects = [];
+
+    if (EVENTS.has(eventName))
+      eventObjects.push(...EVENTS.get(eventName));
+
+    if (EVENTS.has(null))
+      eventObjects.push(...EVENTS.get(null));
+
+    const mapHandler = async ({ handler, reject }) => {
+      try {
+        return await handler(eventContext, eventName);
+      } catch (error) {
+        if (reject) 
+          try {
+            return await reject(error, eventContext, eventName);
+          } catch (rejectError) {
+            console.error('An error occurred within the .catch() handler itself:', rejectError);
+            return error; // Return the original error
+          }
   
+        else
+          return error;
+      }
+    };
 
-  /**
-   * Run event handlers for a given trigger, event name, and event payload.
-   *
-   * @param {string} trigger - The trigger to run event handlers for.
-   * @param {string} eventName - The name of the event.
-   * @param {any} eventPayload - The payload of the event.
-   * @return {Array} - An array containing the results of running the event handlers.
-   */
-  function runEventHandlers(trigger, eventName, eventPayload) {
-    const result = [];
-    if (EVENTS.has(trigger)) {
-      const eventContext = EventContext(requestSender, eventName, eventPayload);
-      for (let handler of EVENTS.get(trigger))
-        result.push(handler(eventContext, eventName));
-    }
+    if (params.parallel === true)
+      return Promise.all(eventObjects.map(mapHandler));
 
-    return result.flat();
-  }
-
+    const results = [];
+    for (const eventObject of eventObjects) 
+      results.push(await mapHandler(eventObject));
+    
+    return results;
+  };
 
   const botContextResult = new Proxy(self, {
     get: (target, prop) => target[prop]
