@@ -1,4 +1,4 @@
-import createRequestSender from '../utils/nodeRequestSenderAsync.js';
+import createRequestSender from '../utils/createNodeRequestSender.js';
 import BotContext from './BotContext.js';
 
 export default createNodeBot;
@@ -11,7 +11,7 @@ export default createNodeBot;
  * @param {object} params - Additional parameters for the bot (optional).
  * @return {BotContext} The created bot context.
  */
-function createNodeBot(token, params = {}) {
-  const requestSender = createRequestSender(token);
+function createNodeBot(token, {timeout=30000, apiUrl='https://api.telegram.org', ...params} = {}) {
+  const requestSender = createRequestSender(token, {timeout, apiUrl});
   return BotContext(requestSender, params);
 }

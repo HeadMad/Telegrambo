@@ -8,7 +8,8 @@
   "browser": "./dist/telegrambo.browser.umd.js",
   "files": [
     "dist",
-    "src"
+    "src",
+    "utils"
   ],
   "exports": {
     ".": {
@@ -18,7 +19,8 @@
     "./browser": {
       "import": "./dist/telegrambo.browser.es.js",
       "require": "./dist/telegrambo.browser.umd.js"
-    }
+    },
+    "./utils": "./utils/index.js"
   },
   "scripts": {
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
@@ -37,8 +39,8 @@
   },
   "homepage": "https://github.com/HeadMad/Telegrambo#readme",
   "devDependencies": {
-    "vite": "^7.2.6",
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
-    "cross-env": "^7.0.3"
+    "vite": "^7.2.6"
   }
 }

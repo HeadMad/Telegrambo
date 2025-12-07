@@ -1,8 +1,8 @@
-import RequestPayloadPrepare from "./requestPayloadPrepare.js";
+import prepareRequestPayload from "./prepareRequestPayload.js";
 
-export default BrowserRequestSenderSync;
+export default createBrowserRequestSenderSync;
 
-function createRequestSender(token, { timeout = 30000, apiUrl = 'https://api.telegram.org' } = {}) {
+function createBrowserRequestSenderSync(token, { timeout = 30000, apiUrl = 'https://api.telegram.org' } = {}) {
   if (!token || typeof token !== 'string') 
     throw new Error('Token must be a non-empty string');
 
@@ -23,7 +23,7 @@ function createRequestSender(token, { timeout = 30000, apiUrl = 'https://api.tel
 
     const request = hasFiles 
       ? buildMultipart(payloadEntries) 
-      : buildJSON(RequestPayloadPrepare(payloadEntries));
+      : buildJSON(prepareRequestPayload(payloadEntries));
 
     return sendRequest(url, request, timeout);
   };

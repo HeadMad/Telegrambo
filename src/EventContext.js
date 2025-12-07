@@ -1,4 +1,4 @@
-import EventContextPayload from './eventContextPayload.js';
+import createEventContextPayload from './createEventContextPayload.js';
 
 export default EventContext;
 
@@ -13,7 +13,7 @@ export default EventContext;
  */
 function EventContext(requestSender, eventName, eventPayload) {
   const eventData = eventPayload[eventName];
-  const contextPayload = EventContextPayload(eventName, eventData);
+  const contextPayload = createEventContextPayload(eventName, eventData);
 
   const eventContextResult = new Proxy(eventData, {
     get(target, prop) {

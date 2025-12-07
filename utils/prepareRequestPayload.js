@@ -6,7 +6,7 @@ const STRING_PROPS = new Set(['chat_id', 'from_chat_id', 'text']);
  * @param {object} requestPayload - The input request payload object.
  * @return {string} - The JSON string representation of the modified request payload.
  */
-function RequestPayloadPrepare(requestPayloadEntries) {
+function prepareRequestPayload(requestPayloadEntries) {
   const result = {};
   for (let [key, value] of requestPayloadEntries)
     if (STRING_PROPS.has(key))
@@ -19,4 +19,4 @@ function RequestPayloadPrepare(requestPayloadEntries) {
   return result;
 }
 
-export default RequestPayloadPrepare;
+export default prepareRequestPayload;

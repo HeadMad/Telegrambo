@@ -293,17 +293,33 @@ import bot from './bot.js';
 import fs from 'fs';
 import path from 'path';
 
-bot.onText('/doc', (event) => {
-  const filePath = path.resolve('./document.pdf');
-  
-  // Check if the file exists
-  if (fs.existsSync(filePath)) {
-    event.sendDocument({
-      document: fs.createReadStream(filePath),
-      caption: 'This is my document'
-    });
-  } else {
+bot.on('message', (event) => {
+  if (event.text === '/doc') {
+    const filePath = path.resolve('./document.pdf');
+    
+    // Check if the file exists
+    if (fs.existsSync(filePath)) {
+      event.sendDocument({
+        document: fs.createReadStream(filePath),
+        caption: 'This is my document'
+      });
+    } else {
     event.sendMessage({ text: 'File not found!' });
+  }
+});
+
+// Sending a document from a Buffer
+bot.on('message', (event) => {
+  if (event.text === '/bufferdoc') {
+    const buffer = Buffer.from('This is a test document from a buffer.', 'utf8');
+    event.sendDocument({
+      document: {
+        source: buffer,
+        filename: 'buffer_doc.txt',
+        contentType: 'text/plain'
+      },
+      caption: 'This is my document from a buffer'
+    });
   }
 });
 ```
@@ -318,23 +334,25 @@ import bot from './bot.js';
 import fs from 'fs';
 import path from 'path';
 
-bot.onText('/media', (event) => {
-  const photoPath1 = path.resolve('./photo1.jpg');
-  const photoPath2 = path.resolve('./photo2.jpg');
+bot.on('message', (event) => {
+  if (event.text === '/media') {
+    const photoPath1 = path.resolve('./photo1.jpg');
+    const photoPath2 = path.resolve('./photo2.jpg');
 
-  event.sendMediaGroup({
-    media: [
-      {
-        type: 'photo',
-        media: fs.createReadStream(photoPath1)
-      },
-      {
-        type: 'photo',
-        media: fs.createReadStream(photoPath2),
-        caption: 'Two images'
-      }
-    ]
-  });
+    event.sendMediaGroup({
+      media: [
+        {
+          type: 'photo',
+          media: fs.createReadStream(photoPath1)
+        },
+        {
+          type: 'photo',
+          media: fs.createReadStream(photoPath2),
+          caption: 'Two images'
+        }
+      ]
+    });
+  }
 });
 ```
 <br>

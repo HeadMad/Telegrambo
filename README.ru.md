@@ -271,11 +271,13 @@ bot.onText('Hello', (event) => {
 ```js
 import bot from './bot.js';
 
-bot.onText('/photo', (event) => {
-  event.sendPhoto({
-    photo: 'https://picsum.photos/200/300',
-    caption: 'Случайное изображение'
-  });
+bot.on('message', (event) => {
+  if (event.text === '/photo') {
+    event.sendPhoto({
+      photo: 'https://picsum.photos/200/300',
+      caption: 'Случайное изображение'
+    });
+  }
 });
 ```
 <br>
@@ -289,17 +291,33 @@ import bot from './bot.js';
 import fs from 'fs';
 import path from 'path';
 
-bot.onText('/doc', (event) => {
-  const filePath = path.resolve('./document.pdf');
-  
-  // Проверяем, существует ли файл
-  if (fs.existsSync(filePath)) {
-    event.sendDocument({
-      document: fs.createReadStream(filePath),
-      caption: 'Это мой документ'
-    });
-  } else {
+bot.on('message', (event) => {
+  if (event.text === '/doc') {
+    const filePath = path.resolve('./document.pdf');
+    
+    // Проверяем, существует ли файл
+    if (fs.existsSync(filePath)) {
+      event.sendDocument({
+        document: fs.createReadStream(filePath),
+        caption: 'Это мой документ'
+      });
+    } else {
     event.sendMessage({ text: 'Файл не найден!' });
+  }
+});
+
+// Отправка документа из Buffer
+bot.on('message', (event) => {
+  if (event.text === '/bufferdoc') {
+    const buffer = Buffer.from('Это тестовый документ из буфера.', 'utf8');
+    event.sendDocument({
+      document: {
+        source: buffer,
+        filename: 'buffer_doc.txt',
+        contentType: 'text/plain'
+      },
+      caption: 'Это мой документ из буфера'
+    });
   }
 });
 ```
@@ -314,23 +332,25 @@ import bot from './bot.js';
 import fs from 'fs';
 import path from 'path';
 
-bot.onText('/media', (event) => {
-  const photoPath1 = path.resolve('./photo1.jpg');
-  const photoPath2 = path.resolve('./photo2.jpg');
+bot.on('message', (event) => {
+  if (event.text === '/media') {
+    const photoPath1 = path.resolve('./photo1.jpg');
+    const photoPath2 = path.resolve('./photo2.jpg');
 
-  event.sendMediaGroup({
-    media: [
-      {
-        type: 'photo',
-        media: fs.createReadStream(photoPath1)
-      },
-      {
-        type: 'photo',
-        media: fs.createReadStream(photoPath2),
-        caption: 'Два изображения'
-      }
-    ]
-  });
+    event.sendMediaGroup({
+      media: [
+        {
+          type: 'photo',
+          media: fs.createReadStream(photoPath1)
+        },
+        {
+          type: 'photo',
+          media: fs.createReadStream(photoPath2),
+          caption: 'Два изображения'
+        }
+      ]
+    });
+  }
 });
 ```
 <br>

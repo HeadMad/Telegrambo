@@ -65,7 +65,7 @@ ContextDataEvents.set('removed_chat_boost', event => ({
 }));
 
 
-export default eventContextPayload;
+export default createEventContextPayload;
 
 
 /**
@@ -75,7 +75,7 @@ export default eventContextPayload;
  * @param {any} eventData - The data associated with the event.
  * @return {object} The payload for the event context.
  */
-function eventContextPayload(eventName, eventData) {
+function createEventContextPayload(eventName, eventData) {
   if (ContextDataEvents.has(eventName))
     return ContextDataEvents.get(eventName)(eventData);
 

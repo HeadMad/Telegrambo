@@ -1,1 +1,0 @@
-export {default as onMatch} from './on-match/index.js';

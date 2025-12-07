@@ -1,112 +1,124 @@
-import b from "https";
-import { URL as $ } from "url";
-const w = /* @__PURE__ */ new Set(["chat_id", "from_chat_id", "text"]);
-function C(t) {
+import S from "https";
+import { URL as x } from "url";
+import { promises as E } from "fs";
+const j = /* @__PURE__ */ new Set(["chat_id", "from_chat_id", "text"]);
+function O(t) {
   const e = {};
   for (let [n, u] of t)
-    w.has(n) ? e[n] = String(u) : typeof u == "object" ? e[n] = JSON.stringify(u) : e[n] = u;
+    j.has(n) ? e[n] = String(u) : typeof u == "object" ? e[n] = JSON.stringify(u) : e[n] = u;
   return e;
 }
-function x(t, { timeout: e = 3e4, apiUrl: n = "https://api.telegram.org" } = {}) {
+function q(t, { timeout: e = 3e4, apiUrl: n = "https://api.telegram.org" } = {}) {
   if (!t || typeof t != "string")
     throw new Error("Token must be a non-empty string");
-  return async function(f, a = {}) {
+  return async function(f, i = {}) {
     if (!f || typeof f != "string")
       throw new Error("Method must be a non-empty string");
-    const o = `${n}/bot${t}/${f}`, i = Object.entries(a), r = i.some(([c, s]) => _(s) ? !0 : c === "media" && Array.isArray(s) ? s.some((d) => _(d?.media)) : !1) ? B(i) : S(C(i));
-    return q(o, r, e);
+    const r = `${n}/bot${t}/${f}`, o = Object.entries(i), d = o.some(([c, s]) => y(s) ? !0 : c === "media" && Array.isArray(s) ? s.some((a) => y(a?.media)) : !1) ? await T(o) : P(O(o));
+    return R(r, d, e);
   };
 }
-function _(t) {
-  return !t || typeof t != "object" ? !1 : t instanceof Buffer || typeof t.pipe == "function" || t.source instanceof Buffer || typeof t.source?.pipe == "function";
+function y(t) {
+  return !t || typeof t != "object" ? !1 : t instanceof Buffer || typeof t.pipe == "function" && t.path || // Ensure it's a file stream
+  t.source instanceof Buffer || typeof t.source?.pipe == "function" && t.source.path;
 }
-function S(t) {
-  const e = JSON.stringify(t);
+function P(t) {
+  const e = JSON.stringify(t), n = Buffer.from(e);
   return {
-    body: Buffer.from(e),
+    body: n,
     headers: {
       "Content-Type": "application/json",
-      "Content-Length": Buffer.byteLength(e)
+      "Content-Length": n.length
     }
   };
 }
-function B(t) {
+async function N(t) {
+  if (t instanceof Buffer)
+    return { size: t.length, stream: t };
+  if (typeof t.pipe == "function" && t.path)
+    return { size: (await E.stat(t.path)).size, stream: t };
+  throw new Error("Invalid file source provided.");
+}
+async function T(t) {
   const e = `----TB${Date.now()}${Math.random().toString(36).slice(2)}`, n = `\r
-`, u = [], f = [];
-  let a = 0;
-  function o(r, c) {
-    if (_(c)) {
-      const s = `file${a++}`;
-      return f.push({ name: s, value: c }), `attach://${s}`;
-    }
-    return r === "media" && Array.isArray(c) ? c.map((s) => {
-      if (s && typeof s == "object" && _(s.media)) {
-        const d = `file${a++}`;
-        return f.push({ name: d, value: s.media }), { ...s, media: `attach://${d}` };
+`, u = `--${e}--${n}`, f = [];
+  let i = 0;
+  const r = [], o = {};
+  let h = 0;
+  for (const [c, s] of t)
+    if (y(s)) {
+      const a = `file${h++}`;
+      r.push({ fieldName: a, file: s }), o[c] = `attach://${a}`;
+    } else c === "media" && Array.isArray(s) ? o[c] = s.map((a) => {
+      if (a && typeof a == "object" && y(a.media)) {
+        const p = `file${h++}`;
+        return r.push({ fieldName: p, file: a.media }), { ...a, media: `attach://${p}` };
       }
-      return s;
-    }) : c;
+      return a;
+    }) : o[c] = s;
+  for (const [c, s] of Object.entries(o)) {
+    const a = typeof s == "object" && s !== null, p = a ? JSON.stringify(s) : String(s);
+    let m = `--${e}${n}`;
+    m += `Content-Disposition: form-data; name="${c}"${n}`, a && (m += `Content-Type: application/json${n}`), m += `${n}${p}${n}`;
+    const _ = Buffer.from(m);
+    f.push(_), i += _.length;
   }
-  function i(r) {
-    const c = r instanceof Buffer || typeof r.pipe == "function";
-    return {
-      source: c ? r : r.source,
-      filename: c ? "file" : r.filename || "file",
-      contentType: c ? "application/octet-stream" : r.contentType || "application/octet-stream"
-    };
-  }
-  for (const [r, c] of t) {
-    const s = o(r, c);
-    u.push(
+  for (const { fieldName: c, file: s } of r) {
+    const { source: a, filename: p = "file", contentType: m = "application/octet-stream" } = s, { size: _, stream: B } = await N(a || s), C = [
       `--${e}${n}`,
-      `Content-Disposition: form-data; name="${r}"${n}${n}`,
-      typeof s == "object" && s !== null ? JSON.stringify(s) : String(s),
-      n
-    );
+      `Content-Disposition: form-data; name="${c}"; filename="${p}"${n}`,
+      `Content-Type: ${m}${n}${n}`
+    ].join(""), b = Buffer.from(C);
+    f.push(b), i += b.length, f.push(B), i += _;
+    const w = Buffer.from(n);
+    f.push(w), i += w.length;
   }
-  for (const { name: r, value: c } of f) {
-    const { source: s, filename: d, contentType: m } = i(c);
-    u.push(
-      `--${e}${n}`,
-      `Content-Disposition: form-data; name="${r}"; filename="${d}"${n}`,
-      `Content-Type: ${m}${n}${n}`,
-      s,
-      n
-    );
-  }
-  u.push(`--${e}--${n}`);
-  const h = Buffer.concat(u.map((r) => Buffer.isBuffer(r) ? r : Buffer.from(r)));
-  return {
-    body: h,
+  const d = Buffer.from(u);
+  return f.push(d), i += d.length, {
+    body: f,
     headers: {
       "Content-Type": `multipart/form-data; boundary=${e}`,
-      "Content-Length": h.length
+      "Content-Length": i
     }
   };
 }
-function q(t, { body: e, headers: n }, u) {
-  return new Promise((f, a) => {
-    const { hostname: o, port: i, pathname: h } = new $(t), r = b.request({
-      hostname: o,
-      port: i || 443,
-      path: h,
-      method: "POST",
-      headers: n,
-      timeout: u
-    }, (c) => {
-      const s = [];
-      c.on("data", (d) => s.push(d)), c.on("end", () => {
-        try {
-          const d = JSON.parse(Buffer.concat(s).toString());
-          f(d);
-        } catch (d) {
-          a(new Error(`Parse error: ${d.message}`));
-        }
-      });
-    });
-    r.on("error", a), r.on("timeout", () => {
-      r.destroy(), a(new Error("Request timeout"));
-    }), r.write(e), r.end();
+function R(t, { body: e, headers: n }, u) {
+  return new Promise((f, i) => {
+    const { hostname: r, port: o, pathname: h } = new x(t), d = S.request(
+      {
+        hostname: r,
+        port: o || 443,
+        path: h,
+        method: "POST",
+        headers: n,
+        timeout: u
+      },
+      (c) => {
+        const s = [];
+        c.on("data", (a) => s.push(a)), c.on("end", () => {
+          const a = Buffer.concat(s).toString();
+          try {
+            const p = JSON.parse(a);
+            f(p);
+          } catch {
+            i(new Error(`Failed to parse response: ${a}`));
+          }
+        });
+      }
+    );
+    d.on("error", i), d.on("timeout", () => {
+      d.destroy(), i(new Error("Request timeout"));
+    }), Array.isArray(e) ? (async () => {
+      try {
+        for (const c of e)
+          c instanceof Buffer ? d.write(c) : await new Promise((s, a) => {
+            c.on("error", a), c.pipe(d, { end: !1 }), c.on("end", s);
+          });
+        d.end();
+      } catch (c) {
+        d.destroy(c);
+      }
+    })() : (d.write(e), d.end());
   });
 }
 const l = /* @__PURE__ */ new Map();
@@ -117,14 +129,14 @@ l.set("message", (t) => ({
   message_thread_id: t?.message_thread_id,
   direct_messages_topic_id: t?.direct_messages_topic?.topic_id
 }));
-const p = (t) => ({
+const g = (t) => ({
   business_connection_id: t.business_connection_id,
   chat_id: t.chat.id,
   message_id: t.message_id
 });
-l.set("business_message", p);
-l.set("edited_business_message", p);
-l.set("deleted_business_messages", p);
+l.set("business_message", g);
+l.set("edited_business_message", g);
+l.set("deleted_business_messages", g);
 l.set("business_connection", (t) => ({
   chat_id: t.user_chat_id
   // business_connection_id: event.id
@@ -153,18 +165,18 @@ l.set("chat_boost", (t) => ({
 l.set("removed_chat_boost", (t) => ({
   chat_id: t.source.user.id
 }));
-function E(t, e) {
+function A(t, e) {
   return l.has(t) ? l.get(t)(e) : {};
 }
-function O(t, e, n) {
-  const u = n[e], f = E(e, u);
+function k(t, e, n) {
+  const u = n[e], f = A(e, u);
   return new Proxy(u, {
-    get(o, i) {
-      return i in o ? o[i] : i === "update" ? n : i === "payload" ? f : (h = {}) => t(i, { ...f, ...h });
+    get(r, o) {
+      return o in r ? r[o] : o === "update" ? n : o === "payload" ? f : (h = {}) => t(o, { ...f, ...h });
     }
   });
 }
-function T() {
+function D() {
   const t = /* @__PURE__ */ new Map();
   return {
     has: (e) => t.has(e),
@@ -174,64 +186,62 @@ function T() {
     }
   };
 }
-class y extends Error {
+class $ extends Error {
   constructor(e) {
     super(e), this.name = "BotContextErrors";
   }
 }
-function j(t, e = {}) {
-  const n = T(), u = {};
-  u.on = (a, o) => {
-    typeof a == "function" && (o = a, a = null);
-    const i = { handler: o };
-    return n.add(a, i), {
+function J(t, e = {}) {
+  const n = D(), u = {};
+  u.on = (i, r) => {
+    typeof i == "function" && (r = i, i = null);
+    const o = { handler: r };
+    return n.add(i, o), {
       catch(h) {
-        i.reject = h;
+        o.reject = h;
       }
     };
-  }, u.setUpdate = async (a) => {
-    const o = Object.keys(a).find((s) => s !== "update_id"), i = O(t, o, a), h = [];
-    n.has(o) && h.push(...n.get(o)), n.has(null) && h.push(...n.get(null));
-    const r = async ({ handler: s, reject: d }) => {
+  }, u.setUpdate = async (i) => {
+    const r = Object.keys(i).find((s) => s !== "update_id"), o = k(t, r, i), h = [];
+    n.has(r) && h.push(...n.get(r)), n.has(null) && h.push(...n.get(null));
+    const d = async ({ handler: s, reject: a }) => {
       try {
-        return await s(i, o);
-      } catch (m) {
-        if (d)
+        return await s(o, r);
+      } catch (p) {
+        if (a)
           try {
-            return await d(m, i, o);
-          } catch (g) {
-            return console.error("An error occurred within the .catch() handler itself:", g), m;
+            return await a(p, o, r);
+          } catch (m) {
+            return console.error("An error occurred within the .catch() handler itself:", m), p;
           }
         else
-          return m;
+          return p;
       }
     };
     if (e.parallel === !0)
-      return Promise.all(h.map(r));
+      return Promise.all(h.map(d));
     const c = [];
     for (const s of h)
-      c.push(await r(s));
+      c.push(await d(s));
     return c;
   };
   const f = new Proxy(u, {
-    get: (a, o) => a[o] ?? ((i = {}) => t(o, i)),
-    set(a, o, i) {
-      if (o in a)
-        throw new y(`Can't rewrite method "${o}"`);
-      if (typeof i != "function")
-        throw new y(`New method "${o}" must be a function`);
-      return a[o] = i(f), !0;
+    get: (i, r) => i[r] ?? ((o = {}) => t(r, o)),
+    set(i, r, o) {
+      if (r in i)
+        throw new $(`Can't rewrite method "${r}"`);
+      if (typeof o != "function")
+        throw new $(`New method "${r}" must be a function`);
+      return i[r] = o(f), !0;
     }
   });
   return f;
 }
-function D(t, e = {}) {
-  const n = x(t);
-  return j(n, e);
+function I(t, { timeout: e = 3e4, apiUrl: n = "https://api.telegram.org", ...u } = {}) {
+  const f = q(t, { timeout: e, apiUrl: n });
+  return J(f, u);
 }
 export {
-  j as botContext,
-  D as createNodeBot,
-  D as default
+  I as default
 };
 //# sourceMappingURL=telegrambo.node.es.js.map
